@@ -1,43 +1,38 @@
-const express = require('express');
-const {MongoClient} = require('mongodb');
-require('dotenv').config();
+const express = require("express");
+const { MongoClient } = require("mongodb");
+require("dotenv").config();
 
 const app = express();
 
 const client = new MongoClient(process.env.MONGODB_URL);
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 async function startServer() {
-    await client.connect();
-    console.log('Connected to MongoDB');
-    const db = client.db("School");
+  await client.connect();
+  console.log("Connected to MongoDB");
+  const db = client.db("School");
 
-    const users = db.collection("Users");
+  const users = db.collection("Users");
 
-    app.post("/login", async(req, res) => {
-        const {email, password} = req.body;
-        const user  = await users.findOne({
-            email: email,
-        })
+  console.log("User inserted into the database");
 
-        if (!user) {
-            return res.json({message: "User not found"});
-        }
+  app.post("/register", async (request, response) => {
+    const { email, password, username } = request.body;
+    const user = await users.insertOne({
+        username: username,
+        email: email,
+        password: password,
+      });
 
-        if (user.password !== password) {
-            return res.json({message: "Incorrect password"});
-        }
-        
-         res.json({
-            success: true,
-            message: "Login successful"
-        });
-    })
-        app.listen(3000, () => {
-        console.log("Server running on http://localhost:3000");
+    response.json({
+      success: true,
+      message: "Registration successful",
     });
+  });
+  app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
+  });
 }
 
 startServer().catch(console.error);
-
