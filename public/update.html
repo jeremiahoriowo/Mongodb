@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Update User</title>
+  <style>
+    /* identical to login page style – you can reuse the same CSS */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6; }
+    .container { background: #fff; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+    .form-group input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; }
+    .form-group input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); outline: none; }
+    .submit-btn { width: 100%; padding: 0.75rem; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .submit-btn:hover { background: #1d4ed8; }
+    #message { margin-top: 1rem; text-align: center; }
+    .nav-links { margin-top: 1.5rem; text-align: center; font-size: 0.875rem; }
+    .nav-links a { color: #2563eb; text-decoration: none; margin: 0 0.5rem; }
+    .nav-links a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h2>Update Your Information</h2>
+    
+    <div id="step1">
+      <div class="form-group">
+        <label for="currentEmail">Enter Your Email</label>
+        <input type="email" id="currentEmail" placeholder="your@email.com" required />
+      </div>
+      <button type="button" id="loadUserBtn" class="submit-btn">Load Current Info</button>
+      <p id="message"></p>
+    </div>
+
+    <div id="step2" style="display: none;">
+      <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #2563eb;">
+        <h3 style="margin-bottom: 0.75rem; color: #1e40af;">Current Record</h3>
+        <p><strong>Username:</strong> <span id="currentUsername"></span></p>
+        <p><strong>Email:</strong> <span id="currentEmailDisplay"></span></p>
+        <p><strong>Password:</strong> <span id="currentPassword"></span></p>
+      </div>
+
+      <form id="updateForm">
+        <h3 style="margin-bottom: 1rem;">Update Fields</h3>
+        <div class="form-group">
+          <label for="newUsername">New Username</label>
+          <input type="text" id="newUsername" placeholder="new username" />
+        </div>
+        <div class="form-group">
+          <label for="newEmail">New Email</label>
+          <input type="email" id="newEmail" placeholder="new@email.com" />
+        </div>
+        <div class="form-group">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" placeholder="new password" />
+        </div>
+        <button type="submit" class="submit-btn">Update</button>
+        <button type="button" id="cancelBtn" class="submit-btn" style="background: #6b7280; margin-top: 0.5rem;">Cancel</button>
+      </form>
+    </div>
+
+    <div class="nav-links">
+      <a href="login.html">Login</a> | <a href="register.html">Register</a> | <a href="delete.html">Delete</a>
+    </div>
+  </main>
+
+  <script>
+    let currentEmail = '';
+
+    document.getElementById('loadUserBtn').addEventListener('click', async () => {
+      const email = document.getElementById('currentEmail').value;
+      if (!email) {
+        document.getElementById('message').textContent = 'Please enter an email';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/getUser/${email}`);
+        const data = await response.json();
+
+        if (!data.success) {
+          document.getElementById('message').textContent = data.message;
+          return;
+        }
+
+        currentEmail = email;
+        document.getElementById('currentUsername').textContent = data.user.username;
+        document.getElementById('currentEmailDisplay').textContent = data.user.email;
+        document.getElementById('currentPassword').textContent = data.user.password;
+
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        document.getElementById('message').textContent = '';
+      } catch (error) {
+        document.getElementById('message').textContent = 'Error loading user data';
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('currentEmail').value = '';
+      document.getElementById('updateForm').reset();
+    });
+
+    document.getElementById('updateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newUsername = document.getElementById('newUsername').value;
+      const newEmail = document.getElementById('newEmail').value;
+      const newPassword = document.getElementById('newPassword').value;
+
+      const response = await fetch('/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentEmail, newUsername, newEmail, newPassword })
+      });
+      const data = await response.json();
+      document.getElementById('message').textContent = data.message;
+      
+      if (data.success) {
+        setTimeout(() => {
+          document.getElementById('step1').style.display = 'block';
+          document.getElementById('step2').style.display = 'none';
+          document.getElementById('currentEmail').value = '';
+          document.getElementById('updateForm').reset();
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>

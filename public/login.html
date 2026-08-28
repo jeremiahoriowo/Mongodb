@@ -133,6 +133,42 @@
     .signup-link a:hover {
       text-decoration: underline;
     }
+
+    #message {
+      margin-top: 1rem;
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    #message.success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    #message.error {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .nav-links {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+    }
+
+    .nav-links a {
+      color: #2563eb;
+      text-decoration: none;
+      margin: 0 0.5rem;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -140,15 +176,10 @@
   <main class="login-container">
     <div class="login-header">
       <h2>Welcome Back</h2>
-      <p>Please enter your details to sign in</p>
+      <p>Please enter your email and password to sign in</p>
     </div>
 
-    <form id="loginForm" method="post">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="Enter your username" required>
-      </div>
-
+    <form id="loginForm">
       <div class="form-group">
         <label for="email">Email address</label>
         <input type="email" id="email" name="email" placeholder="name@example.com" required>
@@ -167,16 +198,58 @@
         <a href="#" class="forgot-password">Forgot password?</a>
       </div>
 
-      <button type="submit" class="submit-btn">Register</button>
+      <button type="submit" class="submit-btn">Sign In</button>
     </form>
     
     <p id="message"></p>
 
     <div class="signup-link">
-      Already have an account? <a href="login.html">Sign in here</a>
+      Don't have an account? <a href="register.html">Sign up here</a>
+    </div>
+
+    <div class="nav-links">
+      <a href="register.html">Register</a> | <a href="update.html">Update</a> | <a href="delete.html">Delete</a>
     </div>
   </main>
 
-  <script src="script.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const messageEl = document.getElementById('message');
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          messageEl.textContent = `Welcome back, ${data.user.username}! Login successful.`;
+          messageEl.className = 'success';
+          messageEl.style.display = 'block';
+          
+          setTimeout(() => {
+            // Optional: redirect to a dashboard or home page
+            alert('Login successful! You can now access other features.');
+            document.getElementById('loginForm').reset();
+          }, 2000);
+        } else {
+          messageEl.textContent = data.message;
+          messageEl.className = 'error';
+          messageEl.style.display = 'block';
+        }
+      } catch (error) {
+        messageEl.textContent = 'An error occurred. Please try again.';
+        messageEl.className = 'error';
+        messageEl.style.display = 'block';
+      }
+    });
+  </script>
 </body>
 </html>

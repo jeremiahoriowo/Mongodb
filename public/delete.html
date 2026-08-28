@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete User</title>
+  <style>
+    /* same style as above */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6; }
+    .container { background: #fff; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+    .form-group input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; }
+    .form-group input:focus { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); outline: none; }
+    .delete-btn { width: 100%; padding: 0.75rem; background: #dc2626; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .delete-btn:hover { background: #b91c1c; }
+    #message { margin-top: 1rem; text-align: center; }
+    .nav-links { margin-top: 1.5rem; text-align: center; font-size: 0.875rem; }
+    .nav-links a { color: #2563eb; text-decoration: none; margin: 0 0.5rem; }
+    .nav-links a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h2>Delete Account</h2>
+    <p style="color: #6b7280; text-align: center; margin-bottom: 1.5rem;">This action is irreversible.</p>
+    
+    <div id="step1">
+      <form id="emailForm">
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" placeholder="your@email.com" required />
+        </div>
+        <button type="submit" class="submit-btn">Show Account Info</button>
+      </form>
+      <p id="message"></p>
+    </div>
+
+    <div id="step2" style="display: none;">
+      <div style="background: #fef2f2; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #dc2626;">
+        <h3 style="margin-bottom: 0.75rem; color: #92400e;">Account to be Deleted</h3>
+        <p><strong>Username:</strong> <span id="deleteUsername"></span></p>
+        <p><strong>Email:</strong> <span id="deleteEmailDisplay"></span></p>
+        <p><strong>Password:</strong> <span id="deletePassword"></span></p>
+      </div>
+
+      <button type="button" id="deleteBtn" class="delete-btn">Delete Permanently</button>
+      <button type="button" id="cancelBtn" class="submit-btn" style="background: #6b7280; margin-top: 0.5rem;">Cancel</button>
+      <p id="deleteMessage"></p>
+    </div>
+
+    <div class="nav-links">
+      <a href="login.html">Login</a> | <a href="register.html">Register</a> | <a href="update.html">Update</a>
+    </div>
+  </main>
+
+  <script>
+    let currentEmail = '';
+
+    document.getElementById('emailForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+
+      try {
+        const response = await fetch(`/getUser/${email}`);
+        const data = await response.json();
+
+        if (!data.success) {
+          document.getElementById('message').textContent = data.message;
+          return;
+        }
+
+        currentEmail = email;
+        document.getElementById('deleteUsername').textContent = data.user.username;
+        document.getElementById('deleteEmailDisplay').textContent = data.user.email;
+        document.getElementById('deletePassword').textContent = data.user.password;
+
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+      } catch (error) {
+        document.getElementById('message').textContent = 'Error loading user data';
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('emailForm').reset();
+      document.getElementById('message').textContent = '';
+      document.getElementById('deleteMessage').textContent = '';
+    });
+
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      if (!confirm(`Are you sure you want to permanently delete the account with email ${currentEmail}? This cannot be undone.`)) return;
+
+      try {
+        const response = await fetch('/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentEmail })
+        });
+        const data = await response.json();
+        document.getElementById('deleteMessage').textContent = data.message;
+        
+        if (data.success) {
+          setTimeout(() => {
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('emailForm').reset();
+            document.getElementById('deleteMessage').textContent = '';
+          }, 2000);
+        }
+      } catch (error) {
+        document.getElementById('deleteMessage').textContent = 'Error deleting account';
+      }
+    });
+  </script>
+</body>
+</html>
